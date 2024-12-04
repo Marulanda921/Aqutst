@@ -60,3 +60,4 @@ C:\Users\amaru\Documents\AlejandroProyectos\LOGIN COMPLETO\TCP-AQUTEST\TCP-AQUTE
 C:\Users\amaru\Documents\AlejandroProyectos\LOGIN COMPLETO\TCP-AQUTEST\TCP-AQUTEST\obj\Debug\net8.0\TCP-AQUTEST.genruntimeconfig.cache
 C:\Users\amaru\Documents\AlejandroProyectos\LOGIN COMPLETO\TCP-AQUTEST\TCP-AQUTEST\obj\Debug\net8.0\ref\TCP-AQUTEST.dll
 C:\Users\amaru\Documents\AlejandroProyectos\LOGIN COMPLETO\TCP-AQUTEST\TCP-AQUTEST\bin\Debug\net8.0\Newtonsoft.Json.dll
+C:\Users\amaru\Documents\AlejandroProyectos\LOGIN COMPLETO\TCP-AQUTEST\TCP-AQUTEST\obj\Debug\net8.0\TCP-AQUTEST.sourcelink.json
