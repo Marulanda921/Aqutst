@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "FHtkY8nwBZR99/0ivRbTs83OTilcDYCcq/+WrkvLg8w=",
+  "Source": "TCP-AQUTEST",
+  "BasePath": "_content/TCP-AQUTEST",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

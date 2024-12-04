@@ -1,0 +1,6 @@
+@TCP_AQUTEST_HostAddress = http://localhost:5285
+
+GET {{TCP_AQUTEST_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
