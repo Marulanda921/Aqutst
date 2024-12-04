@@ -2,12 +2,11 @@
 using Microsoft.Extensions.Options;
 using TCP_AQUTEST.Infraestructure.Interfaz;
 using TCP_AQUTEST.Models.Kafka;
-
 namespace TCP_AQUTEST.Infraestructure
 {
     public class KafkaProducer : IKafkaProducer, IDisposable
     {
-        private readonly IProducer<Null, string> _producer; // Productor configurado para valores binarios
+        private readonly IProducer<Null, string> _producer;
         private readonly ILogger<KafkaProducer> _logger;
 
         public KafkaProducer(IOptions<KafkaSettings> settings, ILogger<KafkaProducer> logger)
@@ -27,7 +26,6 @@ namespace TCP_AQUTEST.Infraestructure
         {
             try
             {
-                // Enviar el mensaje como un arreglo de bytes (sin cambios)
                 var result = await _producer.ProduceAsync(topic,
                     new Message<Null, string> { Value = message });
 
@@ -40,7 +38,6 @@ namespace TCP_AQUTEST.Infraestructure
                 throw;
             }
         }
-
         public void Dispose()
         {
             _producer?.Dispose();

@@ -10,6 +10,10 @@ using System.Net.NetworkInformation;
 using Confluent.Kafka;
 using Newtonsoft.Json;
 using System.Text;
+using System.Diagnostics.Metrics;
+using System.Threading.Channels;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace TCP_AQUTEST.Services
 {
@@ -18,18 +22,22 @@ namespace TCP_AQUTEST.Services
         private readonly IKafkaProducer _kafkaProducer;
         private readonly IOptions<KafkaSettings> _settings;
         private readonly ILogger<TcpServer> _logger;
+        private IMongoCollection<BsonDocument> _collection;
+        private readonly IBdService _db;
 
         public static readonly string PortTCP =
             new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("TCP")["Port"];
 
         public TcpServer(IKafkaProducer kafkaProducer,
             IOptions<KafkaSettings> settings,
-            ILogger<TcpServer> logger)
+            ILogger<TcpServer> logger, IBdService database)
         {
+            _db = database;
             _kafkaProducer = kafkaProducer;
             _settings = settings;
             _logger = logger;
         }
+
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -70,6 +78,8 @@ namespace TCP_AQUTEST.Services
             _logger.LogInformation("Servidor TCP detenido.");
         }
 
+
+
         private string GetLocalIPAddress()
         {
             foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
@@ -95,6 +105,8 @@ namespace TCP_AQUTEST.Services
             return "IP no encontrada";
         }
 
+
+
         public async Task ProcessClientAsync(TcpClient client, CancellationToken stoppingToken)
         {
             using var stream = client.GetStream();
@@ -111,6 +123,12 @@ namespace TCP_AQUTEST.Services
                     string hexString = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
                     var hexValues = hexString.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
+
+                    //Sensor envio
+                    ReadSensor grSensor = procesDataForSensorGeneric(hexString);
+                    await _db.InsertDocument("ReadSensor", JsonConvert.SerializeObject((grSensor)));
+
+
                     foreach (var hex in hexValues)
                     {
                         if (byte.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out byte value))
@@ -123,7 +141,7 @@ namespace TCP_AQUTEST.Services
                     {
                         var messageData = data.ToArray();
 
-                        ReadSensor rSensor = ProcessData(messageData);
+                        ReadSensorFormat rSensor = ProcessData(messageData);
                         var jsonReadSensor = JsonConvert.SerializeObject(rSensor);
                         byte[] byteArray = Encoding.UTF8.GetBytes(jsonReadSensor);
 
@@ -149,19 +167,34 @@ namespace TCP_AQUTEST.Services
         }
 
 
-        private ReadSensor ProcessData(byte[] messageData)
+
+        private ReadSensorFormat ProcessData(byte[] messageData)
         {
             try
             {
+                var plotSize = (BitConverter.ToString(messageData.Take(2).ToArray()).Replace("-", ""));
 
-                var typeMessage = (BitConverter.ToString(messageData.Skip(14).Take(1).ToArray()).Replace("-", ""));
+                var plotVersion = (BitConverter.ToString(messageData.Skip(2).Take(1).ToArray()).Replace("-", ""));
 
+                var encondeType = (BitConverter.ToString(messageData.Skip(3).Take(1).ToArray()).Replace("-", ""));
+
+                var plotIntegrity = (BitConverter.ToString(messageData.Skip(4).Take(3).ToArray()).Replace("-", ""));
+
+                var aquaSerial = (BitConverter.ToString(messageData.Skip(7).Take(4).ToArray()).Replace("-", ""));
+
+                var master = (BitConverter.ToString(messageData.Skip(11).Take(1).ToArray()).Replace("-", ""));
+
+                var sensorCode = (BitConverter.ToString(messageData.Skip(12).Take(1).ToArray()).Replace("-", ""));
+
+                var channel = (BitConverter.ToString(messageData.Skip(13).Take(1).ToArray()).Replace("-", ""));
+
+                var systemComand = (BitConverter.ToString(messageData.Skip(14).Take(1).ToArray()).Replace("-", ""));
 
                 var responseCode = int.Parse(BitConverter.ToString(messageData.Skip(15).Take(1).ToArray()).Replace("-", ""));
 
                 var dateReadService = DateTime.Now;
 
-
+                var typeMessage = (BitConverter.ToString(messageData.Skip(3).Take(1).ToArray()).Replace("-", ""));
 
                 var dateReadSensorStr = BitConverter.ToString(messageData.Skip(16).Take(7).ToArray()).Replace("-", "");
 
@@ -177,12 +210,19 @@ namespace TCP_AQUTEST.Services
                 var transmissionHex = (BitConverter.ToString(messageData.Skip(28).Take(4).ToArray()).Replace("-", ""));
 
                 var transmissionValue = (ConvertHexToDouble(transmissionHex));
-                
-              
 
 
-                return new ReadSensor
+                return new ReadSensorFormat
                 {
+                    PlotSize = plotSize,
+                    PlotVersion = plotVersion,
+                    EncodeType = encondeType,
+                    PlotIntegrity = plotIntegrity,
+                    AquaSerial = aquaSerial,
+                    Master = master,
+                    Channel = channel,
+                    SystemComand = systemComand,
+                    SensorCode = sensorCode,
                     ResponseCode = responseCode,
                     DateReadSensor = dateReadSensor,
                     DateReadService = dateReadService,
@@ -197,9 +237,10 @@ namespace TCP_AQUTEST.Services
             }
             catch (Exception)
             {
-                return new ReadSensor();
+                return new ReadSensorFormat();
             }
         }
+
 
 
         public static double ConvertHexToDouble(string hexString)
@@ -222,6 +263,33 @@ namespace TCP_AQUTEST.Services
 
             // Luego convertimos a double
             return Convert.ToDouble(floatValue);
+        }
+
+
+
+
+        public ReadSensor procesDataForSensorGeneric(string msg)
+        {
+
+            try
+            {
+                var realTime = DateTime.Now;
+
+                return new ReadSensor()
+                {
+                    CompleteSensor = msg,
+                    RealTime = realTime
+                };
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+
+
+            
         }
     
 

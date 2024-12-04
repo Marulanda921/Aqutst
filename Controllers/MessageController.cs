@@ -26,7 +26,6 @@ namespace TCP_AQUTEST.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] TcpMessage message)
         {
-            //byte[] messageBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject((message)));
             await _kafkaProducer.ProduceAsync(_settings.Value.Topic, JsonConvert.SerializeObject((message)));
             return Ok();
         }

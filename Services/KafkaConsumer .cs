@@ -1,7 +1,7 @@
 ﻿using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Microsoft.Extensions.Options;
-using System.Text;
+using TCP_AQUTEST.Infraestructure.Interfaz;
 using TCP_AQUTEST.Models.Kafka;
 
 namespace TCP_AQUTEST.Services
@@ -9,12 +9,15 @@ namespace TCP_AQUTEST.Services
     public class KafkaConsumer : BackgroundService
     {
         private readonly IConsumer<string, string> _consumer;
-        private readonly HttpClient _httpClient;
         private readonly IOptions<KafkaSettings> _settings;
+        private readonly IBdService _db;
 
-        public KafkaConsumer(IOptions<KafkaSettings> settings)
+
+        public KafkaConsumer(IOptions<KafkaSettings> settings, IBdService database)
         {
             _settings = settings;
+           _db = database;
+           
             var config = new ConsumerConfig
             {
                 BootstrapServers = settings.Value.BootstrapServers,
@@ -22,8 +25,6 @@ namespace TCP_AQUTEST.Services
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
             _consumer = new ConsumerBuilder<string, string>(config).Build();
-
-            // Crear topic si no existe
             CreateTopicIfNotExists();
         }
 
@@ -37,7 +38,6 @@ namespace TCP_AQUTEST.Services
             using var adminClient = new AdminClientBuilder(adminConfig).Build();
             try
             {
-                // Intentar crear el tema
                 adminClient.CreateTopicsAsync(new TopicSpecification[]
                 {
                     new TopicSpecification
@@ -50,22 +50,17 @@ namespace TCP_AQUTEST.Services
             }
             catch (CreateTopicsException ex)
             {
-                // Comprobamos si el código de error es "TopicAlreadyExists"
                 if (ex.Error.Code == Confluent.Kafka.ErrorCode.TopicAlreadyExists)
                 {
-                    // El tema ya existe, ignoramos el error
                     Console.WriteLine($"El tema '{_settings.Value.Topic}' ya existe. Ignorando el error.");
                 }
                 else
                 {
-                    // Si el error no es por tema existente, mostramos el error
                     Console.WriteLine($"Error al crear el tema: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                // Manejo de cualquier otro tipo de error
-                //Console.WriteLine($"Error inesperado: {ex.Message}");
             }
         }
 
@@ -105,8 +100,7 @@ namespace TCP_AQUTEST.Services
         {
             try
             {
-                var content = new StringContent(message, Encoding.UTF8, "application/json");
-                await _httpClient.PostAsync("http://tu-api-destino.com/endpoint", content);
+               await _db.InsertDocument("ReadSensorFormat", message);
             }
             catch (Exception ex)
             {
