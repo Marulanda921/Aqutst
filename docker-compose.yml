@@ -31,13 +31,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - TCP_PORT=${TCP_PORT}
     container_name: tcp-api
     ports:
-      - "8080:80"
+      - "${TCP_PORT}:${TCP_PORT}"
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
+      Kafka__BootstrapServers: "kafka:9092"
+      TCP__Port: ${TCP_PORT}
     networks:
-      - mynetwork
+      - mynetwork                   # Override de puerto TCP
 
 networks:
   mynetwork:
