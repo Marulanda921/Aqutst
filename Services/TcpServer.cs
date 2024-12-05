@@ -137,11 +137,8 @@ namespace TCP_AQUTEST.Services
                         }
                     }
 
-                    while (data.Count >= 20)
-                    {
-                        var messageData = data.ToArray();
-
-                        ReadSensorFormat rSensor = ProcessData(messageData);
+                    var messageData = data.ToArray();
+                    ReadSensorFormat rSensor = ProcessData(messageData);
                         var jsonReadSensor = JsonConvert.SerializeObject(rSensor);
                         byte[] byteArray = Encoding.UTF8.GetBytes(jsonReadSensor);
 
@@ -153,7 +150,7 @@ namespace TCP_AQUTEST.Services
                         await stream.WriteAsync(messageData, 0, messageData.Length);
 
                         data.RemoveRange(0, 20);
-                    }
+                    
                 }
             }
             catch (Exception ex)
@@ -172,47 +169,76 @@ namespace TCP_AQUTEST.Services
         {
             try
             {
-                var plotSize = (BitConverter.ToString(messageData.Take(2).ToArray()).Replace("-", ""));
+                var plotSize = messageData.Length >= 2
+                    ? BitConverter.ToString(messageData.Take(2).ToArray()).Replace("-", "") : null;
 
-                var plotVersion = (BitConverter.ToString(messageData.Skip(2).Take(1).ToArray()).Replace("-", ""));
+                var plotVersion = messageData.Length >= 3
+                    ? BitConverter.ToString(messageData.Skip(2).Take(1).ToArray()).Replace("-", "") : null;
 
-                var encondeType = (BitConverter.ToString(messageData.Skip(3).Take(1).ToArray()).Replace("-", ""));
+                var encondeType = messageData.Length >= 4
+                    ? BitConverter.ToString(messageData.Skip(3).Take(1).ToArray()).Replace("-", "") : null;
 
-                var plotIntegrity = (BitConverter.ToString(messageData.Skip(4).Take(3).ToArray()).Replace("-", ""));
+                var plotIntegrity = messageData.Length >= 7
+                    ? BitConverter.ToString(messageData.Skip(4).Take(3).ToArray()).Replace("-", "") : null;
 
-                var aquaSerial = (BitConverter.ToString(messageData.Skip(7).Take(4).ToArray()).Replace("-", ""));
+                var aquaSerial = messageData.Length >= 11
+                    ? BitConverter.ToString(messageData.Skip(7).Take(4).ToArray()).Replace("-", "") : null;
 
-                var master = (BitConverter.ToString(messageData.Skip(11).Take(1).ToArray()).Replace("-", ""));
+                var master = messageData.Length >= 12
+                    ? BitConverter.ToString(messageData.Skip(11).Take(1).ToArray()).Replace("-", "") : null;
 
-                var sensorCode = (BitConverter.ToString(messageData.Skip(12).Take(1).ToArray()).Replace("-", ""));
+                var sensorCode = messageData.Length >= 13
+                    ? BitConverter.ToString(messageData.Skip(12).Take(1).ToArray()).Replace("-", "") : null;
 
-                var channel = (BitConverter.ToString(messageData.Skip(13).Take(1).ToArray()).Replace("-", ""));
+                var channel = messageData.Length >= 14
+                    ? BitConverter.ToString(messageData.Skip(13).Take(1).ToArray()).Replace("-", "") : null;
 
-                var systemComand = (BitConverter.ToString(messageData.Skip(14).Take(1).ToArray()).Replace("-", ""));
+                var systemComand = messageData.Length >= 15
+                    ? BitConverter.ToString(messageData.Skip(14).Take(1).ToArray()).Replace("-", "") : null;
 
-                var responseCode = int.Parse(BitConverter.ToString(messageData.Skip(15).Take(1).ToArray()).Replace("-", ""));
+                var responseCode = messageData.Length >= 16
+                    ? int.Parse(BitConverter.ToString(messageData.Skip(15).Take(1).ToArray()).Replace("-", "")) : (int?)null;
 
                 var dateReadService = DateTime.Now;
 
-                var typeMessage = (BitConverter.ToString(messageData.Skip(3).Take(1).ToArray()).Replace("-", ""));
+                var typeMessage = messageData.Length >= 4
+                    ? BitConverter.ToString(messageData.Skip(3).Take(1).ToArray()).Replace("-", "") : null;
 
-                var dateReadSensorStr = BitConverter.ToString(messageData.Skip(16).Take(7).ToArray()).Replace("-", "");
+                DateTime? dateReadSensor = null;
 
-                var dateFormat = "yyyyMMddHHmmss";
+                if (messageData.Length >= 23)
+                {
+                    var dateReadSensorStr = BitConverter.ToString(messageData.Skip(16).Take(7).ToArray()).Replace("-", "");
+                    var dateFormat = "yyyyMMddHHmmss";
 
-                var dateReadSensor = DateTime.ParseExact(dateReadSensorStr, dateFormat,
-                    System.Globalization.CultureInfo.InvariantCulture);
+                    if (DateTime.TryParseExact(dateReadSensorStr, dateFormat,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None, out var parsedDate))
+                    {
+                        dateReadSensor = parsedDate;
+                    }
+                }
 
-                var nut = int.Parse(BitConverter.ToString(messageData.Skip(23).Take(4).ToArray()).Replace("-", ""));
-
-                var alert = BitConverter.ToString(messageData.Skip(27).Take(1).ToArray());
-
-                var transmissionHex = (BitConverter.ToString(messageData.Skip(28).Take(4).ToArray()).Replace("-", ""));
-
-                var transmissionValue = (ConvertHexToDouble(transmissionHex));
+                var nut = messageData.Length >= 27
+                    ? int.Parse(BitConverter.ToString(messageData.Skip(23).Take(4).ToArray()).Replace("-", ""))
+                    : (int?)null;
 
 
-                return new ReadSensorFormat
+                var alert = messageData.Length >= 28
+                    ? BitConverter.ToString(messageData.Skip(27).Take(1).ToArray())
+                    : null;
+                string transmissionHex = null;
+
+
+                double? transmissionValue = null;
+
+                if (messageData.Length >= 32)
+                {
+                    transmissionHex = BitConverter.ToString(messageData.Skip(28).Take(4).ToArray()).Replace("-", "");
+                    transmissionValue = ConvertHexToDouble(transmissionHex);
+                }
+
+                var result = new ReadSensorFormat
                 {
                     PlotSize = plotSize,
                     PlotVersion = plotVersion,
@@ -228,18 +254,22 @@ namespace TCP_AQUTEST.Services
                     DateReadService = dateReadService,
                     Nut = nut,
                     Alert = alert,
-                    TransmissionValue = transmissionValue,
-                    TypeMessage = typeMessage
-
                 };
+                if (!string.IsNullOrEmpty(transmissionHex) && transmissionValue.HasValue)
+                {
+                    result.TransmissionValue = transmissionValue.Value;
+                    result.TypeMessage = typeMessage;
+                }
 
-
+                return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error al procesar los datos: {ex.Message}");
                 return new ReadSensorFormat();
             }
         }
+
 
 
 
