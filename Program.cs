@@ -5,6 +5,7 @@ using TCP_AQUTEST.Infraestructure;
 using TCP_AQUTEST.Infraestructure.Utils;
 using TCP_AQUTEST.Models.Kafka;
 using TCP_AQUTEST.Services;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,22 +28,16 @@ builder.Services.AddHostedService<TcpServer>(); // Registra TcpServer como servi
 builder.Services.AddHostedService<KafkaConsumer>(); // Registra KafkaConsumer como servicio en segundo plano
 
 // Configuración de controladores y Swagger
-builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Desactivar Kestrel
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(5000); // Puerto HTTP diferente, por ejemplo 5000
+});
 
 var app = builder.Build();
-
-// Configuración de Swagger para desarrollo
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
 
 // Inicia la aplicación
 app.Run();

@@ -1,18 +1,1 @@
-[
-  {
-    "ContainingType": "TCP_AQUTEST.Controllers.MessageController",
-    "Method": "Post",
-    "RelativePath": "Message",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "message",
-        "Type": "TCP_AQUTEST.Models.Entity.TcpMessage",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  }
-]
+[]

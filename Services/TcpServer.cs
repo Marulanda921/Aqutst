@@ -42,40 +42,55 @@ namespace TCP_AQUTEST.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var server = new TcpListener(IPAddress.Any, int.Parse(PortTCP));
-            server.Start();
 
-            // Obtener la dirección IP local y el puerto del servidor
-            var localEndPoint = server.LocalEndpoint as IPEndPoint;
-            if (localEndPoint != null)
+            try
             {
-                // Obtener la IP de la máquina (no la de '0.0.0.0')
-                string localIPAddress = GetLocalIPAddress();
-                _logger.LogInformation($"Servidor TCP iniciado en IP: {localIPAddress} y puerto: {localEndPoint.Port}");
-            }
-            else
-            {
-                _logger.LogInformation("Servidor TCP iniciado, pero no se pudo obtener la dirección IP.");
-            }
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
+                server.Start();
+                var localEndPoint = server.LocalEndpoint as IPEndPoint;
+                if (localEndPoint != null)
                 {
-                    var client = await server.AcceptTcpClientAsync(stoppingToken);
-                    _logger.LogInformation(
-                        $"Cliente conectado desde: {(client.Client.RemoteEndPoint as IPEndPoint)?.Address}");
-
-                    _ = ProcessClientAsync(client, stoppingToken); // Maneja al cliente de forma asíncrona
+                    string localIPAddress = GetLocalIPAddress();
+                    _logger.LogInformation($"Servidor TCP iniciado en IP: {localIPAddress} y puerto: {localEndPoint.Port}");
                 }
-                catch (Exception ex)
+
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    _logger.LogError($"Error en servidor TCP: {ex.Message}");
+                    try
+                    {
+                        // Acepta una nueva conexión
+                        var client = await server.AcceptTcpClientAsync(stoppingToken);
+                        _logger.LogInformation($"Cliente conectado desde: {(client.Client.RemoteEndPoint as IPEndPoint)?.Address}");
+
+                        // Procesa el cliente en segundo plano y continúa escuchando
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await ProcessClientAsync(client, stoppingToken);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError($"Error procesando cliente: {ex.Message}");
+                            }
+                        }, stoppingToken);
+                    }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        // Salir limpiamente si se solicita cancelación
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error aceptando conexión: {ex.Message}");
+                        // Continúa escuchando a pesar del error
+                    }
                 }
             }
-
-            // Detener el servidor cuando la aplicación se apaga
-            server.Stop();
-            _logger.LogInformation("Servidor TCP detenido.");
+            finally
+            {
+                server.Stop();
+                _logger.LogInformation("Servidor TCP detenido.");
+            }
         }
 
 
