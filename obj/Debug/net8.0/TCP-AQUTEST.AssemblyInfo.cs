@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TCP-AQUTEST")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+959236be53ede5754addf5821d9e27e4b55b11cb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0d97983985eb6e6bdffe862cadfddfb71889e128")]
 [assembly: System.Reflection.AssemblyProductAttribute("TCP-AQUTEST")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TCP-AQUTEST")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
