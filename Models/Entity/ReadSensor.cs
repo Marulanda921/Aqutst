@@ -2,7 +2,7 @@
 {
     public class ReadSensor
     {
-        public string? CompleteSensor;
-        public DateTime? RealTime;
+        public string? ReadBytes;
+        public DateTime? DateReceipt;
     }
 }

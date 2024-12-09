@@ -3,10 +3,10 @@ services:
    image: confluentinc/cp-zookeeper:latest
    container_name: zookeeper
    environment:
-     ZOOKEEPER_CLIENT_PORT: "2181"
+     ZOOKEEPER_CLIENT_PORT: "${ZOOKEEPER_PORT}"
      ZOOKEEPER_TICK_TIME: 2000
    ports:
-     - "${ZOOKEEPER_PORT}:2181"
+     - "${ZOOKEEPER_PORT}:${ZOOKEEPER_PORT}"
    networks:
      - mynetwork
  kafka:
@@ -15,11 +15,11 @@ services:
    depends_on:
      - zookeeper
    ports:
-     - "${KAFKA_INSIDE_PORT}:9092"
-     - "${KAFKA_OUTSIDE_PORT}:9093"
+     - "${KAFKA_INSIDE_PORT}:${KAFKA_INSIDE_PORT}"
+     - "${KAFKA_OUTSIDE_PORT}:${KAFKA_OUTSIDE_PORT}"
    environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_PORT}
       KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:${KAFKA_INSIDE_PORT},OUTSIDE://localhost:${KAFKA_OUTSIDE_PORT}
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
       KAFKA_LISTENER_NAME_INSIDE: INSIDE
@@ -35,27 +35,27 @@ services:
   image: mongo:latest
   container_name: mongodb
   ports:
-    - "2005:27017"
+    - "${MONGODB_OUTSIDE_PORT}:${MONGODB_INSIDE_PORT}"
   volumes:
     - mongodb_data:/data/db
   networks:
     - mynetwork
 
  api:
-   build:
-     context: .
-     dockerfile: Dockerfile
-     args:
-       - TCP_PORT=${TCP_PORT}
-   container_name: tcp-api
-   ports:
-     - "${TCP_PORT}:8080"
-   environment:
-     ASPNETCORE_ENVIRONMENT: "Development"
-     Kafka__BootstrapServers: "kafka:9092"
-     TCP__Port: ${TCP_PORT}
-   networks:
-     - mynetwork
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      - TCP_PORT=${TCP_INSIDE_PORT}  # Pasar el puerto interno del contenedor
+  container_name: tcp-api
+  ports:
+    - "${TCP_OUTSIDE_PORT}:${TCP_INSIDE_PORT}"  # Mapeo correcto
+  environment:
+    ASPNETCORE_ENVIRONMENT: "Development"
+    Kafka__BootstrapServers: "kafka:${KAFKA_INSIDE_PORT}"
+    TCP__Port: ${TCP_INSIDE_PORT}  # Cambiar para que coincida con el puerto interno
+  networks:
+    - mynetwork
 networks:
  mynetwork:
    driver: bridge

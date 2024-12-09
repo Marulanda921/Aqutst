@@ -14,6 +14,7 @@ using System.Diagnostics.Metrics;
 using System.Threading.Channels;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System.Collections;
 
 namespace TCP_AQUTEST.Services
 {
@@ -151,45 +152,40 @@ namespace TCP_AQUTEST.Services
             using var stream = client.GetStream();
             var buffer = new byte[1024];
             var data = new List<byte>();
-
             try
             {
                 int bytesRead;
                 while ((bytesRead = await stream.ReadAsync(buffer, stoppingToken)) > 0)
                 {
-                    //_logger.LogInformation($"Datos recibidos (raw): {BitConverter.ToString(buffer, 0, bytesRead)}");
-
-                    string hexString = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                    var hexValues = hexString.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    // Agregar los bytes leídos a la lista
+                    data.AddRange(buffer.Take(bytesRead));
 
 
-                    //Sensor envio
+                    // Convertir a string para el primer procesamiento sin modificar data
+                    string hexString = string.Join(" ", data.Select(b => b.ToString("X2")));
+
+                    // Procesar para el sensor usando el string
                     ReadSensor grSensor = procesDataForSensorGeneric(hexString);
-                    await _db.InsertDocument("ReadSensor", JsonConvert.SerializeObject((grSensor)));
+                    await _db.InsertDocument("ReadSensor", JsonConvert.SerializeObject(grSensor));
 
-
-                    foreach (var hex in hexValues)
-                    {
-                        if (byte.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out byte value))
-                        {
-                            data.Add(value);
-                        }
-                    }
-
+                    // Usar la lista de bytes original para el segundo procesamiento
                     var messageData = data.ToArray();
                     ReadSensorFormat rSensor = ProcessData(messageData);
-                        var jsonReadSensor = JsonConvert.SerializeObject(rSensor);
-                        byte[] byteArray = Encoding.UTF8.GetBytes(jsonReadSensor);
 
+                    var jsonReadSensor = JsonConvert.SerializeObject(rSensor);
+                    _logger.LogInformation($"Datos procesados (json): {jsonReadSensor}");
 
-                        _logger.LogInformation($"Datos procesados (json): {jsonReadSensor}");
+                    // Enviar a Kafka
+                    await _kafkaProducer.ProduceAsync(_settings.Value.Topic, jsonReadSensor);
 
-                        // Enviar bytes directamente a Kafka sin serialización JSON
-                        await _kafkaProducer.ProduceAsync(_settings.Value.Topic, jsonReadSensor);
-                        await stream.WriteAsync(messageData, 0, messageData.Length);
+                    // Enviar respuesta
+                    await stream.WriteAsync(messageData, 0, messageData.Length);
 
+                    // Limpiar los bytes procesados
+                    if (data.Count >= 20)
+                    {
                         data.RemoveRange(0, 20);
-                    
+                    }
                 }
             }
             catch (Exception ex)
@@ -346,8 +342,8 @@ namespace TCP_AQUTEST.Services
 
                 return new ReadSensor()
                 {
-                    CompleteSensor = msg,
-                    RealTime = realTime
+                    ReadBytes = msg,
+                    DateReceipt = realTime
                 };
 
             }
