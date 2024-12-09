@@ -17,6 +17,8 @@ using MongoDB.Driver;
 
 namespace TCP_AQUTEST.Services
 {
+    //09/12/2024 - Alejandro Marulanda
+
     public class TcpServer : BackgroundService
     {
         private readonly IKafkaProducer _kafkaProducer;
@@ -25,9 +27,15 @@ namespace TCP_AQUTEST.Services
         private IMongoCollection<BsonDocument> _collection;
         private readonly IBdService _db;
 
-        public static readonly string PortTCP =
-            new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("TCP")["Port"];
 
+        
+
+
+        //configuración para leer valores de un archivo JSON 
+        public static readonly string PortTCP = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("TCP")["Port"];
+
+
+        //toma cuatro parámetros. Cada uno de estos parámetros es un servicio o una interfaz que probablemente será inyectado en la clase TcpServer
         public TcpServer(IKafkaProducer kafkaProducer,
             IOptions<KafkaSettings> settings,
             ILogger<TcpServer> logger, IBdService database)
@@ -37,28 +45,41 @@ namespace TCP_AQUTEST.Services
             _settings = settings;
             _logger = logger;
         }
+                
 
-
+        //Este método es el que se encarga de ejecutar el servidor TCP de manera asincrónica y gestionar las conexiones entrantes.
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            //escuchar las conexiones TCP entrantes en un puerto determinado. En este caso, el servidor escuchará en todas las interfaces de red de la máquina
             var server = new TcpListener(IPAddress.Any, int.Parse(PortTCP));
 
+           
             try
             {
+                // Inicia el servidor TCP para que comience a escuchar las conexiones entrantes.
                 server.Start();
+
+                //Obtiene el punto final (endpoint) local del servidor, que incluye la dirección IP y el puerto en el que está escuchando.
                 var localEndPoint = server.LocalEndpoint as IPEndPoint;
                 if (localEndPoint != null)
                 {
+
+                    //Se llama a este método para obtener la dirección IP local de la máquina.
                     string localIPAddress = GetLocalIPAddress();
+
+                    //Registra un mensaje informativo en los logs, indicando que el servidor ha comenzado a escuchar en la dirección IP y puerto especificados.
                     _logger.LogInformation($"Servidor TCP iniciado en IP: {localIPAddress} y puerto: {localEndPoint.Port}");
                 }
 
+                //Este ciclo se ejecuta mientras el servicio no sea cancelado, lo que significa que sigue aceptando nuevas conexiones hasta que se le indique
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     try
                     {
-                        // Acepta una nueva conexión
+                        //Acepta de forma asincrónica una nueva conexión TCP entrante.
                         var client = await server.AcceptTcpClientAsync(stoppingToken);
+
+                        //Registra un mensaje informativo con la dirección IP del cliente que se acaba de conectar.
                         _logger.LogInformation($"Cliente conectado desde: {(client.Client.RemoteEndPoint as IPEndPoint)?.Address}");
 
                         // Procesa el cliente en segundo plano y continúa escuchando
@@ -66,14 +87,17 @@ namespace TCP_AQUTEST.Services
                         {
                             try
                             {
+                                //ste es un método asincrónico que probablemente maneja la lógica de comunicación con el cliente, como leer y escribir datos en el flujo de la red.
                                 await ProcessClientAsync(client, stoppingToken);
                             }
                             catch (Exception ex)
                             {
+                                // Si ocurre un error al procesar el cliente, se captura y se registra el error.
                                 _logger.LogError($"Error procesando cliente: {ex.Message}");
                             }
                         }, stoppingToken);
                     }
+                    //servicio se cancela - Esto permite que el servidor se detenga limpiamente sin seguir aceptando nuevas conexiones.
                     catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                     {
                         // Salir limpiamente si se solicita cancelación
@@ -81,8 +105,8 @@ namespace TCP_AQUTEST.Services
                     }
                     catch (Exception ex)
                     {
+                        //Si ocurre un error al intentar aceptar una conexión, se registra un mensaje de error, pero el ciclo sigue escuchando para nuevas conexiones.
                         _logger.LogError($"Error aceptando conexión: {ex.Message}");
-                        // Continúa escuchando a pesar del error
                     }
                 }
             }

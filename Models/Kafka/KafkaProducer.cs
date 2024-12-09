@@ -1,8 +1,7 @@
 ﻿using Confluent.Kafka;
 using Microsoft.Extensions.Options;
 using TCP_AQUTEST.Infraestructure.Interfaz;
-using TCP_AQUTEST.Models.Kafka;
-namespace TCP_AQUTEST.Infraestructure
+namespace TCP_AQUTEST.Models.Kafka
 {
     public class KafkaProducer : IKafkaProducer, IDisposable
     {
