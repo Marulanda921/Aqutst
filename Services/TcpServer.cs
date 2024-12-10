@@ -15,7 +15,6 @@ using System.Threading.Channels;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections;
-
 namespace TCP_AQUTEST.Services
 {
     //09/12/2024 - Alejandro Marulanda
@@ -151,41 +150,72 @@ namespace TCP_AQUTEST.Services
         {
             using var stream = client.GetStream();
             var buffer = new byte[1024];
-            var data = new List<byte>();
+
             try
             {
                 int bytesRead;
                 while ((bytesRead = await stream.ReadAsync(buffer, stoppingToken)) > 0)
                 {
-                    // Agregar los bytes leídos a la lista
-                    data.AddRange(buffer.Take(bytesRead));
+                    // Crear un nuevo array con solo los bytes leídos
+                    var receivedData = new byte[bytesRead];
+                    Array.Copy(buffer, receivedData, bytesRead);
 
-
-                    // Convertir a string para el primer procesamiento sin modificar data
-                    string hexString = string.Join(" ", data.Select(b => b.ToString("X2")));
+                    // Procesar los datos recibidos
+                    string hexString = string.Join(" ", receivedData.Select(b => b.ToString("X2")));
+                    _logger.LogInformation($"Datos leídos (hex): {hexString}");
 
                     // Procesar para el sensor usando el string
                     ReadSensor grSensor = procesDataForSensorGeneric(hexString);
                     await _db.InsertDocument("ReadSensor", JsonConvert.SerializeObject(grSensor));
 
-                    // Usar la lista de bytes original para el segundo procesamiento
-                    var messageData = data.ToArray();
-                    ReadSensorFormat rSensor = ProcessData(messageData);
-
+                    // Procesar los datos
+                    ReadSensorFormat rSensor = ProcessData(receivedData);
                     var jsonReadSensor = JsonConvert.SerializeObject(rSensor);
                     _logger.LogInformation($"Datos procesados (json): {jsonReadSensor}");
 
                     // Enviar a Kafka
                     await _kafkaProducer.ProduceAsync(_settings.Value.Topic, jsonReadSensor);
 
-                    // Enviar respuesta
-                    await stream.WriteAsync(messageData, 0, messageData.Length);
+                    DateTime now = DateTime.Now;
+                    string formattedDate = now.ToString("yyyyMMddHHmmss");
 
-                    // Limpiar los bytes procesados
-                    if (data.Count >= 20)
+                    string responseString = rSensor.PlotSize  + rSensor.PlotVersion  + rSensor.EncodeType  + rSensor.PlotIntegrity +
+                         rSensor.AquaSerial  + rSensor.Master  + rSensor.SensorCode  + rSensor.Channel +
+                         rSensor.SystemComand  + rSensor.ResponseCode  + formattedDate  + rSensor.Nut;
+
+                    // Método para agregar un espacio cada dos caracteres
+                    string AddSpacesEveryTwoCharacters(string input)
                     {
-                        data.RemoveRange(0, 20);
+                        return string.Concat(input.Select((c, i) => i > 0 && i % 2 == 0 ? " " + c : c.ToString()));
                     }
+
+                    // Formatear la cadena con espacios
+                    string formattedResponseString = AddSpacesEveryTwoCharacters(responseString);
+
+                    _logger.LogInformation($"Datos a enviar (str): {responseString}");
+                    _logger.LogInformation($"Bytes a enviar (hex): {formattedResponseString}");
+
+                    try
+                    {
+                        // Dividir la cadena formateada por espacios y convertir a bytes
+                        byte[] responseHexBytes = formattedResponseString
+                            .Trim()                       // Eliminar espacios en los extremos
+                            .Split(' ')                   // Dividir por espacios
+                            .Where(hex => !string.IsNullOrEmpty(hex)) // Ignorar elementos vacíos
+                            .Select(hex => Convert.ToByte(hex, 16))  // Convertir a byte
+                            .ToArray();
+
+                       
+
+                        await stream.WriteAsync(responseHexBytes, 0, responseHexBytes.Length);
+                    }
+                    catch (FormatException ex)
+                    {
+                        _logger.LogError($"Error al convertir a bytes: {ex.Message}");
+                    }                   // Convertir el resultado a un arreglo de bytes
+
+
+                    
                 }
             }
             catch (Exception ex)
@@ -231,8 +261,8 @@ namespace TCP_AQUTEST.Services
                 var systemComand = messageData.Length >= 15
                     ? BitConverter.ToString(messageData.Skip(14).Take(1).ToArray()).Replace("-", "") : null;
 
-                var responseCode = messageData.Length >= 16
-                    ? int.Parse(BitConverter.ToString(messageData.Skip(15).Take(1).ToArray()).Replace("-", "")) : (int?)null;
+                var responseCode = messageData.Length >= 16 ?
+                    (BitConverter.ToString(messageData.Skip(15).Take(1).ToArray()).Replace("-", "")) : null;
 
                 var dateReadService = DateTime.Now;
 
