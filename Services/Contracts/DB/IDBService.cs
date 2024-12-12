@@ -1,6 +1,6 @@
-﻿namespace TCP_AQUTEST.Infraestructure.Interfaz
+﻿namespace TCP_AQUTEST.Services.Contracts.DB
 {
-    public interface IBdService
+    public interface IDBService
     {
 
         //Interfaz de la base de datos, recibe las colecciones y el string y las inserta a una base de datos

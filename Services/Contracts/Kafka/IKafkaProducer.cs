@@ -1,4 +1,4 @@
-﻿namespace TCP_AQUTEST.Infraestructure.Interfaz
+﻿namespace TCP_AQUTEST.Services.Contracts.Kafka
 {
     public interface IKafkaProducer
     {

@@ -2,7 +2,7 @@
 {
     public class ReadSensor
     {
-        public string? ReadBytes;
-        public DateTime? DateReceipt;
+        public string Data { get; set; }
+        public DateTime Timestamp { get; set; }
     }
 }

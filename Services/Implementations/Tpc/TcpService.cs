@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using System.Net.Sockets;
 using System.Net;
-using TCP_AQUTEST.Infraestructure.Interfaz;
 using TCP_AQUTEST.Models.Kafka;
 using System.Text.Json;
 using TCP_AQUTEST.Models.Entity;
@@ -15,20 +14,22 @@ using System.Threading.Channels;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections;
-namespace TCP_AQUTEST.Services
+using TCP_AQUTEST.Services.Contracts.DB;
+using TCP_AQUTEST.Services.Contracts.Kafka;
+namespace TCP_AQUTEST.Services.Implementations.Tpc
 {
     //09/12/2024 - Alejandro Marulanda
 
-    public class TcpServer : BackgroundService
+    public class TcpService : BackgroundService
     {
         private readonly IKafkaProducer _kafkaProducer;
         private readonly IOptions<KafkaSettings> _settings;
-        private readonly ILogger<TcpServer> _logger;
+        private readonly ILogger<TcpService> _logger;
         private IMongoCollection<BsonDocument> _collection;
-        private readonly IBdService _db;
+        private readonly IDBService _db;
 
 
-        
+
 
 
         //configuración para leer valores de un archivo JSON 
@@ -36,16 +37,16 @@ namespace TCP_AQUTEST.Services
 
 
         //toma cuatro parámetros. Cada uno de estos parámetros es un servicio o una interfaz que probablemente será inyectado en la clase TcpServer
-        public TcpServer(IKafkaProducer kafkaProducer,
+        public TcpService(IKafkaProducer kafkaProducer,
             IOptions<KafkaSettings> settings,
-            ILogger<TcpServer> logger, IBdService database)
+            ILogger<TcpService> logger, IDBService database)
         {
             _db = database;
             _kafkaProducer = kafkaProducer;
             _settings = settings;
             _logger = logger;
         }
-                
+
 
         //Este método es el que se encarga de ejecutar el servidor TCP de manera asincrónica y gestionar las conexiones entrantes.
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -53,7 +54,7 @@ namespace TCP_AQUTEST.Services
             //escuchar las conexiones TCP entrantes en un puerto determinado. En este caso, el servidor escuchará en todas las interfaces de red de la máquina
             var server = new TcpListener(IPAddress.Any, int.Parse(PortTCP));
 
-           
+
             try
             {
                 // Inicia el servidor TCP para que comience a escuchar las conexiones entrantes.
@@ -179,9 +180,9 @@ namespace TCP_AQUTEST.Services
                     DateTime now = DateTime.Now;
                     string formattedDate = now.ToString("yyyyMMddHHmmss");
 
-                    string responseString = rSensor.PlotSize  + rSensor.PlotVersion  + rSensor.EncodeType  + rSensor.PlotIntegrity +
-                         rSensor.AquaSerial  + rSensor.Master  + rSensor.SensorCode  + rSensor.Channel +
-                         rSensor.SystemComand  + rSensor.ResponseCode  + formattedDate  + rSensor.Nut;
+                    string responseString = rSensor.PlotSize + rSensor.PlotVersion + rSensor.EncodeType + rSensor.PlotIntegrity +
+                         rSensor.AquaSerial + rSensor.Master + rSensor.SensorCode + rSensor.Channel +
+                         rSensor.SystemComand + rSensor.ResponseCode + formattedDate + rSensor.Nut;
 
                     // Método para agregar un espacio cada dos caracteres
                     string AddSpacesEveryTwoCharacters(string input)
@@ -205,7 +206,7 @@ namespace TCP_AQUTEST.Services
                             .Select(hex => Convert.ToByte(hex, 16))  // Convertir a byte
                             .ToArray();
 
-                       
+
 
                         await stream.WriteAsync(responseHexBytes, 0, responseHexBytes.Length);
                     }
@@ -215,7 +216,7 @@ namespace TCP_AQUTEST.Services
                     }                   // Convertir el resultado a un arreglo de bytes
 
 
-                    
+
                 }
             }
             catch (Exception ex)
@@ -262,7 +263,7 @@ namespace TCP_AQUTEST.Services
                     ? BitConverter.ToString(messageData.Skip(14).Take(1).ToArray()).Replace("-", "") : null;
 
                 var responseCode = messageData.Length >= 16 ?
-                    (BitConverter.ToString(messageData.Skip(15).Take(1).ToArray()).Replace("-", "")) : null;
+                    BitConverter.ToString(messageData.Skip(15).Take(1).ToArray()).Replace("-", "") : null;
 
                 var dateReadService = DateTime.Now;
 
@@ -372,8 +373,8 @@ namespace TCP_AQUTEST.Services
 
                 return new ReadSensor()
                 {
-                    ReadBytes = msg,
-                    DateReceipt = realTime
+                    Data = msg,
+                    Timestamp = realTime
                 };
 
             }
@@ -384,9 +385,9 @@ namespace TCP_AQUTEST.Services
             }
 
 
-            
+
         }
-    
+
 
     }
 }

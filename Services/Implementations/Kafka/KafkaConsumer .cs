@@ -1,23 +1,23 @@
 ﻿using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 using Microsoft.Extensions.Options;
-using TCP_AQUTEST.Infraestructure.Interfaz;
 using TCP_AQUTEST.Models.Kafka;
+using TCP_AQUTEST.Services.Contracts.DB;
 
-namespace TCP_AQUTEST.Services
+namespace TCP_AQUTEST.Services.Implementations.Kafka
 {
     public class KafkaConsumer : BackgroundService
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly IOptions<KafkaSettings> _settings;
-        private readonly IBdService _db;
+        private readonly IDBService _db;
 
 
-        public KafkaConsumer(IOptions<KafkaSettings> settings, IBdService database)
+        public KafkaConsumer(IOptions<KafkaSettings> settings, IDBService database)
         {
             _settings = settings;
-           _db = database;
-           
+            _db = database;
+
             var config = new ConsumerConfig
             {
                 BootstrapServers = settings.Value.BootstrapServers,
@@ -50,7 +50,7 @@ namespace TCP_AQUTEST.Services
             }
             catch (CreateTopicsException ex)
             {
-                if (ex.Error.Code == Confluent.Kafka.ErrorCode.TopicAlreadyExists)
+                if (ex.Error.Code == ErrorCode.TopicAlreadyExists)
                 {
                     Console.WriteLine($"El tema '{_settings.Value.Topic}' ya existe. Ignorando el error.");
                 }
@@ -100,7 +100,7 @@ namespace TCP_AQUTEST.Services
         {
             try
             {
-               await _db.InsertDocument("ReadSensorFormat", message);
+                await _db.InsertDocument("ReadSensorFormat", message);
             }
             catch (Exception ex)
             {

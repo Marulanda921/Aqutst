@@ -1,14 +1,14 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using TCP_AQUTEST.Infraestructure.Interfaz;
+using TCP_AQUTEST.Services.Contracts.DB;
 
-namespace TCP_AQUTEST.Infraestructure.Utils
+namespace TCP_AQUTEST.Services.Implementations.DB
 {
-    public class BdService : IBdService
+    public class DBService : IDBService
     {
         private readonly IMongoDatabase _database;
 
-        public BdService(IMongoDatabase database)
+        public DBService(IMongoDatabase database)
         {
             _database = database;
         }

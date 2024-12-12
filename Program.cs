@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using TCP_AQUTEST.Infraestructure.Interfaz;
-using TCP_AQUTEST.Infraestructure.Utils;
 using TCP_AQUTEST.Models.Kafka;
-using TCP_AQUTEST.Services;
 using System.Net;
+using TCP_AQUTEST.Services.Implementations.Kafka;
+using TCP_AQUTEST.Services.Implementations.Tpc;
+using TCP_AQUTEST.Services.Contracts.DB;
+using TCP_AQUTEST.Services.Contracts.Kafka;
+using TCP_AQUTEST.Services.Implementations.DB;
 
 
 
@@ -24,10 +26,10 @@ builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafk
 // Registro de servicios para Kafka y TCP
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
-builder.Services.AddSingleton<IBdService, BdService>();
+builder.Services.AddSingleton<IDBService, DBService>();
 
 // Registra TcpServer como servicio en segundo plano
-builder.Services.AddHostedService<TcpServer>();
+builder.Services.AddHostedService<TcpService>();
 
 // Registra KafkaConsumer como servicio en segundo plano
 builder.Services.AddHostedService<KafkaConsumer>(); 
