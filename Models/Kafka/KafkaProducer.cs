@@ -3,6 +3,13 @@ using Microsoft.Extensions.Options;
 using TCP_AQUTEST.Infraestructure.Interfaz;
 namespace TCP_AQUTEST.Models.Kafka
 {
+
+
+    /// <summary>
+    /// Inyeccion de dependendencias
+    /// Constructor para poder almacenar las inyecciones de dependencias pertinentes
+    /// validar la configuracion de el programa para que cumpla con las directrices pedidas
+    /// </summary>
     public class KafkaProducer : IKafkaProducer, IDisposable
     {
         private readonly IProducer<Null, string> _producer;
@@ -11,6 +18,7 @@ namespace TCP_AQUTEST.Models.Kafka
         public KafkaProducer(IOptions<KafkaSettings> settings, ILogger<KafkaProducer> logger)
         {
             _logger = logger;
+            //
             var config = new ProducerConfig
             {
                 BootstrapServers = settings.Value.BootstrapServers,
@@ -21,13 +29,24 @@ namespace TCP_AQUTEST.Models.Kafka
             _producer = new ProducerBuilder<Null, string>(config).Build();
         }
 
+
+
+
+        /// <summary>
+        /// se generan las tateas de manera asyncrona - topico / mensaje
+        /// el reuslado es la espera del producer asyncrono que nos trae el mensaje
+        /// si falla el envio del mensaje
+        /// </summary>
+        /// <param name="topic"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
+
         public async Task ProduceAsync(string topic, string message)
         {
             try
             {
                 var result = await _producer.ProduceAsync(topic,
                     new Message<Null, string> { Value = message });
-
                 _logger.LogInformation(
                     $"Mensaje enviado a Kafka. Topic: {topic}, Partition: {result.Partition}, Offset: {result.Offset}");
             }

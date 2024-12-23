@@ -1,6 +1,8 @@
 ﻿namespace TCP_AQUTEST.Models.Entity
 {
-
+    /// <summary>
+    /// Clase que representa la entidad ReadSensorFormat
+    /// </summary>
     public class ReadSensorFormat
     {
         public string? PlotSize { get; set; }

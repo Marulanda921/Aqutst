@@ -1,9 +1,9 @@
 ﻿namespace TCP_AQUTEST.Infraestructure.Interfaz
 {
+    /// <summary>
+    ///Interfaz de la base de datos, recibe las colecciones y el string 
+    ///las inserta a una base de datos
+    /// </summary>
     public interface IBdService
-    {
-
-        //Interfaz de la base de datos, recibe las colecciones y el string y las inserta a una base de datos
-        Task InsertDocument(string collectionName, string jsonString);
-    }
+    {Task InsertDocument(string collectionName, string jsonString);}
 }

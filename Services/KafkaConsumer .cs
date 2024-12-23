@@ -6,13 +6,26 @@ using TCP_AQUTEST.Models.Kafka;
 
 namespace TCP_AQUTEST.Services
 {
+
+    /// <summary>
+    /// Clase que representa un consumidor de Kafka.
+    /// Esta clase se encarga de consumir mensajes de un tópico de Kafka y
+    /// almacenarlos en una base de datos.
+    /// </summary>
     public class KafkaConsumer : BackgroundService
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly IOptions<KafkaSettings> _settings;
         private readonly IBdService _db;
 
-
+        /// <summary>
+        /// Constructor de la clase.
+        /// Inicializa una nueva instancia de la clase KafkaConsumer.
+        /// Este constructor recibe un objeto de configuración de Kafka y una
+        /// instancia de la interfaz IBdService.
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <param name="database"></param>
         public KafkaConsumer(IOptions<KafkaSettings> settings, IBdService database)
         {
             _settings = settings;
@@ -28,13 +41,22 @@ namespace TCP_AQUTEST.Services
             CreateTopicIfNotExists();
         }
 
+        /// <summary>
+        /// Método que crea un tópico en Kafka si no existe.
+        /// Este método se encarga de crear un tópico en Kafka si no existe.
+        /// Si el tópico ya existe, el método no hace nada.
+        /// Si ocurre un error al crear el tópico, el método imprime un mensaje
+        /// de error en la consola.
+        /// Este método no retorna ningún valor.
+        /// </summary>
         private void CreateTopicIfNotExists()
         {
+            //Crear nueva configuracion para el administrador
             var adminConfig = new AdminClientConfig
             {
                 BootstrapServers = _settings.Value.BootstrapServers
             };
-
+            //
             using var adminClient = new AdminClientBuilder(adminConfig).Build();
             try
             {
@@ -64,6 +86,14 @@ namespace TCP_AQUTEST.Services
             }
         }
 
+        /// <summary>
+        /// Método que inicia el consumidor de Kafka.
+        /// Este método inicia el consumidor de Kafka y comienza a consumir
+        /// mensajes del tópico configurado en el objeto de configuración.
+        /// Este método no retorna ningún valor.
+        /// </summary>
+        /// <param name="stoppingToken"></param>
+        /// <returns></returns>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
@@ -96,6 +126,14 @@ namespace TCP_AQUTEST.Services
             }
         }
 
+        /// <summary>
+        /// Método que procesa un mensaje de Kafka.
+        /// Este método recibe un mensaje de Kafka y lo almacena en una base de
+        /// datos.
+        /// Este método no retorna ningún valor.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         private async Task ProcessMessage(string message)
         {
             try

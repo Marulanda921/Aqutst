@@ -205,3 +205,14 @@ C:\Users\amaru\Documents\Proyecto\Aqutst\obj\Debug\net8.0\refint\TCP-AQUTEST.dll
 C:\Users\amaru\Documents\Proyecto\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.pdb
 C:\Users\amaru\Documents\Proyecto\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.genruntimeconfig.cache
 C:\Users\amaru\Documents\Proyecto\Aqutst\obj\Debug\net8.0\ref\TCP-AQUTEST.dll
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.csproj.AssemblyReference.cache
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.AssemblyInfoInputs.cache
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.AssemblyInfo.cs
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.csproj.CoreCompileInputs.cache
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.sourcelink.json
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.dll
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\refint\TCP-AQUTEST.dll
+C:\Users\amaru\Documents\AlejandroProyectos\Aqutst\obj\Debug\net8.0\TCP-AQUTEST.pdb
