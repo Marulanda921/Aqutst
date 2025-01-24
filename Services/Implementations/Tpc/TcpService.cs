@@ -28,10 +28,6 @@ namespace TCP_AQUTEST.Services.Implementations.Tpc
         private IMongoCollection<BsonDocument> _collection;
         private readonly IDBService _db;
 
-
-
-
-
         //configuración para leer valores de un archivo JSON 
         public static readonly string PortTCP = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetSection("TCP")["Port"];
 
