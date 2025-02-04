@@ -3,6 +3,6 @@
     public class TcpMessage
     {
         public string Data { get; set; }
-        public DateTime Timestamp { get; set; }
+        public string Timestamp { get; set; }
     }
 }

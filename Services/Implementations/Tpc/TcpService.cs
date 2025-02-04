@@ -16,6 +16,7 @@ using MongoDB.Driver;
 using System.Collections;
 using TCP_AQUTEST.Services.Contracts.DB;
 using TCP_AQUTEST.Services.Contracts.Kafka;
+using MongoDB.Driver.Linq;
 namespace TCP_AQUTEST.Services.Implementations.Tpc
 {
     //09/12/2024 - Alejandro Marulanda
@@ -178,7 +179,7 @@ namespace TCP_AQUTEST.Services.Implementations.Tpc
 
                     string responseString = rSensor.PlotSize + rSensor.PlotVersion + rSensor.EncodeType + rSensor.PlotIntegrity +
                          rSensor.AquaSerial + rSensor.Master + rSensor.SensorCode + rSensor.Channel +
-                         rSensor.SystemComand + rSensor.ResponseCode + formattedDate + rSensor.Nut;
+                         rSensor.SystemCommand + rSensor.ResponseCode + formattedDate + rSensor.Nut;
 
                     // Método para agregar un espacio cada dos caracteres
                     string AddSpacesEveryTwoCharacters(string input)
@@ -255,18 +256,19 @@ namespace TCP_AQUTEST.Services.Implementations.Tpc
                 var channel = messageData.Length >= 14
                     ? BitConverter.ToString(messageData.Skip(13).Take(1).ToArray()).Replace("-", "") : null;
 
-                var systemComand = messageData.Length >= 15
+                var systemCommand = messageData.Length >= 15
                     ? BitConverter.ToString(messageData.Skip(14).Take(1).ToArray()).Replace("-", "") : null;
 
                 var responseCode = messageData.Length >= 16 ?
                     BitConverter.ToString(messageData.Skip(15).Take(1).ToArray()).Replace("-", "") : null;
 
-                var dateReadService = DateTime.Now;
+                var dateReadService = DateTime.UtcNow;
+
 
                 var typeMessage = messageData.Length >= 4
                     ? BitConverter.ToString(messageData.Skip(3).Take(1).ToArray()).Replace("-", "") : null;
 
-                DateTime? dateReadSensor = null;
+                DateTime dateReadSensor = DateTime.Now;
 
                 if (messageData.Length >= 23)
                 {
@@ -309,11 +311,11 @@ namespace TCP_AQUTEST.Services.Implementations.Tpc
                     AquaSerial = aquaSerial,
                     Master = master,
                     Channel = channel,
-                    SystemComand = systemComand,
+                    SystemCommand = systemCommand,
                     SensorCode = sensorCode,
                     ResponseCode = responseCode,
-                    DateReadSensor = dateReadSensor,
-                    DateReadService = dateReadService,
+                    DateReadSensor = dateReadSensor.ToString("yyyy-MM-dd HH:mm:ss"),
+                    DateReadService = dateReadService.ToString("yyyy-MM-dd HH:mm:ss"),
                     Nut = nut,
                     Alert = alert,
                 };
@@ -370,7 +372,7 @@ namespace TCP_AQUTEST.Services.Implementations.Tpc
                 return new ReadSensor()
                 {
                     Data = msg,
-                    Timestamp = realTime
+                    Timestamp = realTime.ToString("yyyy-MM-dd HH:mm:ss")
                 };
 
             }

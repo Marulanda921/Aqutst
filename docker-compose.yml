@@ -5,6 +5,7 @@ services:
    environment:
      ZOOKEEPER_CLIENT_PORT: "${ZOOKEEPER_PORT}"
      ZOOKEEPER_TICK_TIME: 2000
+     TZ: "America/Bogota"
    ports:
      - "${ZOOKEEPER_PORT}:${ZOOKEEPER_PORT}"
    networks:
@@ -29,6 +30,7 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      TZ: "America/Bogota" 
    networks:
      - mynetwork
  mongodb:
@@ -38,6 +40,8 @@ services:
     - "${MONGODB_OUTSIDE_PORT}:${MONGODB_INSIDE_PORT}"
   volumes:
     - mongodb_data:/data/db
+  environment:
+     TZ: "America/Bogota"  
   networks:
     - mynetwork
 
@@ -54,6 +58,7 @@ services:
     ASPNETCORE_ENVIRONMENT: "Development"
     Kafka__BootstrapServers: "kafka:${KAFKA_INSIDE_PORT}"
     TCP__Port: ${TCP_INSIDE_PORT}  # Cambiar para que coincida con el puerto interno
+    TZ: "America/Bogota"
   networks:
     - mynetwork
 networks:

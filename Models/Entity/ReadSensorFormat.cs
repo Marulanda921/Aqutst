@@ -11,9 +11,9 @@
         public string? Master { get; set; }
         public string? SensorCode { get; set; }
         public string? Channel { get; set; }
-        public string? SystemComand { get; set; }
-        public DateTime? DateReadSensor { get; set; }
-        public DateTime? DateReadService { get; set; }
+        public string? SystemCommand { get; set; }
+        public string? DateReadSensor { get; set; }
+        public string? DateReadService { get; set; }
         public string? ResponseCode { get; set; }
         public int? Nut { get; set; }
         public string? Alert { get; set; }
